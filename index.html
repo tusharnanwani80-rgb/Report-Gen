@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TTC — Progress Report Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --terra: #C0572B;
+    --terra-dark: #9B3E1A;
+    --terra-light: #E8835A;
+    --cream: #FDF6EE;
+    --cream-dark: #F2E8D9;
+    --brown: #4A2512;
+    --muted: #9A7B6A;
+    --white: #FFFFFF;
+    --shadow: rgba(192,87,43,0.15);
+  }
+ 
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  body {
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+ 
+  /* Background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(192,87,43,0.07) 0%, transparent 50%),
+      radial-gradient(circle at 85% 80%, rgba(192,87,43,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+ 
+  .page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+ 
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    padding: 48px 0 36px;
+    animation: fadeDown 0.6s ease both;
+  }
+ 
+  .logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+ 
+  .logo-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--terra-light);
+  }
+ 
+  .brand-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--terra-dark);
+    letter-spacing: 0.02em;
+  }
+ 
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+    color: var(--brown);
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+ 
+  .header h1 span {
+    color: var(--terra);
+  }
+ 
+  .header p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    font-weight: 400;
+  }
+ 
+  /* ── DIVIDER ── */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 32px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--cream-dark);
+  }
+  .divider-icon {
+    font-size: 1rem;
+    color: var(--terra-light);
+  }
+ 
+  /* ── CARD ── */
+  .card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 36px 32px;
+    box-shadow: 0 4px 30px var(--shadow), 0 1px 4px rgba(0,0,0,0.04);
+    animation: fadeUp 0.7s ease both;
+    animation-delay: 0.1s;
+    margin-bottom: 20px;
+  }
+ 
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--brown);
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+ 
+  .card-title .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--terra);
+    flex-shrink: 0;
+  }
+ 
+  /* ── FORM ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+ 
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+ 
+  .field.full { grid-column: 1 / -1; }
+ 
+  label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+ 
+  input, select, textarea {
+    background: var(--cream);
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    color: var(--brown);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+ 
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--terra-light);
+    box-shadow: 0 0 0 3px rgba(192,87,43,0.1);
+  }
+ 
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239A7B6A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+ 
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+  }
+ 
+  /* Attendance row */
+  .attend-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+ 
+  /* Mood selector */
+  .mood-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+ 
+  .mood-btn {
+    background: var(--cream);
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 30px;
+    padding: 7px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+ 
+  .mood-btn.active {
+    background: var(--terra);
+    border-color: var(--terra);
+    color: white;
+  }
+ 
+  /* Language toggle */
+  .lang-row {
+    display: flex;
+    gap: 0;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+ 
+  .lang-btn {
+    flex: 1;
+    background: var(--cream);
+    border: none;
+    padding: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+ 
+  .lang-btn.active {
+    background: var(--terra);
+    color: white;
+  }
+ 
+  /* ── GENERATE BUTTON ── */
+  .btn-generate {
+    width: 100%;
+    background: var(--terra);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.02em;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+ 
+  .btn-generate::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1));
+  }
+ 
+  .btn-generate:hover:not(:disabled) {
+    background: var(--terra-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(192,87,43,0.35);
+  }
+ 
+  .btn-generate:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+  }
+ 
+  /* Spinner */
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+ 
+  .btn-generate.loading .spinner { display: block; }
+  .btn-generate.loading .btn-text { opacity: 0.8; }
+ 
+  /* ── OUTPUT ── */
+  .output-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 4px 30px var(--shadow);
+    animation: fadeUp 0.5s ease both;
+    display: none;
+    margin-bottom: 20px;
+  }
+ 
+  .output-card.visible { display: block; }
+ 
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+ 
+  .output-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--brown);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+ 
+  .badge {
+    background: #E8F5E9;
+    color: #2E7D32;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+ 
+  .message-box {
+    background: var(--cream);
+    border-radius: 14px;
+    padding: 20px;
+    font-size: 0.93rem;
+    color: var(--brown);
+    line-height: 1.75;
+    white-space: pre-wrap;
+    border-left: 3px solid var(--terra-light);
+    min-height: 80px;
+  }
+ 
+  .action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+ 
+  .btn-action {
+    border-radius: 10px;
+    padding: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: none;
+  }
+ 
+  .btn-copy {
+    background: var(--cream-dark);
+    color: var(--brown);
+  }
+  .btn-copy:hover { background: #e8d8c4; }
+ 
+  .btn-whatsapp {
+    background: #25D366;
+    color: white;
+  }
+  .btn-whatsapp:hover { background: #1ebe5d; }
+ 
+  /* ── HISTORY ── */
+  .history-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 28px 32px;
+    box-shadow: 0 4px 30px var(--shadow);
+    display: none;
+    animation: fadeUp 0.5s ease both;
+  }
+ 
+  .history-card.visible { display: block; }
+ 
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+ 
+  .history-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--brown);
+  }
+ 
+  .btn-clear {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    text-decoration: underline;
+  }
+ 
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+ 
+  .history-item {
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+ 
+  .history-item:hover { background: var(--cream-dark); }
+ 
+  .history-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+ 
+  .history-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--brown);
+  }
+ 
+  .history-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+ 
+  .history-arrow {
+    color: var(--terra-light);
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+ 
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    padding: 28px 0 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+ 
+  .footer span { color: var(--terra); }
+ 
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--brown);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+ 
+  /* ── ANIMATIONS ── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+ 
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+ 
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+ 
+  /* ── RESPONSIVE ── */
+  @media (max-width: 480px) {
+    .card { padding: 24px 20px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .field.full { grid-column: 1; }
+    .action-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+ 
+<div class="page-wrap">
+ 
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-row">
+      <img src="https://i.postimg.cc/x9mDND2Q/Ttc-logo.png" alt="TTC Logo" class="logo-img" />
+      <span class="brand-name">Tushar Tuition Classes</span>
+    </div>
+    <h1>Progress Report<br/><span>Generator</span></h1>
+    <p>Fill in 5 fields. Get a heartfelt parent message in seconds.</p>
+  </div>
+ 
+  <div class="divider"><span class="divider-icon">✦</span></div>
+ 
+  <!-- FORM CARD -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span> Student Details</div>
+    <div class="form-grid">
+ 
+      <div class="field">
+        <label>Student Name</label>
+        <input type="text" id="studentName" placeholder="e.g. Rohan Sharma" />
+      </div>
+ 
+      <div class="field">
+        <label>Class</label>
+        <select id="studentClass">
+          <option value="">Select Class</option>
+          <option>Class 1</option><option>Class 2</option><option>Class 3</option>
+          <option>Class 4</option><option>Class 5</option><option>Class 6</option>
+          <option>Class 7</option><option>Class 8</option><option>Class 9</option>
+        </select>
+      </div>
+ 
+      <div class="field">
+        <label>Subject(s)</label>
+        <input type="text" id="subjects" placeholder="e.g. Maths, Science" />
+      </div>
+ 
+      <div class="field">
+        <label>Attendance</label>
+        <div class="attend-row">
+          <input type="number" id="attendPresent" placeholder="Present" min="0" />
+          <input type="number" id="attendTotal" placeholder="Total" min="1" />
+        </div>
+      </div>
+ 
+      <div class="field full">
+        <label>What did the student do well? ✨</label>
+        <textarea id="strength" placeholder="e.g. Improved in fractions, asks good questions, regular attendance..."></textarea>
+      </div>
+ 
+      <div class="field full">
+        <label>What are we working on? 🎯</label>
+        <textarea id="improvement" placeholder="e.g. Word problems in Maths, English grammar..."></textarea>
+      </div>
+ 
+      <div class="field full">
+        <label>Overall Progress This Month</label>
+        <div class="mood-row" id="moodRow">
+          <button class="mood-btn active" data-mood="Excellent 🌟">Excellent 🌟</button>
+          <button class="mood-btn" data-mood="Good 👍">Good 👍</button>
+          <button class="mood-btn" data-mood="Improving 📈">Improving 📈</button>
+          <button class="mood-btn" data-mood="Needs Focus 🎯">Needs Focus 🎯</button>
+        </div>
+      </div>
+ 
+      <div class="field full">
+        <label>Message Language</label>
+        <div class="lang-row">
+          <button class="lang-btn active" id="langEn" onclick="setLang('en')">English</button>
+          <button class="lang-btn" id="langHi" onclick="setLang('hi')">Hindi (हिंदी)</button>
+          <button class="lang-btn" id="langMr" onclick="setLang('mr')">Marathi (मराठी)</button>
+        </div>
+      </div>
+ 
+    </div>
+ 
+    <button class="btn-generate" id="generateBtn" onclick="generateReport()">
+      <div class="spinner"></div>
+      <span class="btn-text">✨ Generate Parent Message</span>
+    </button>
+  </div>
+ 
+  <!-- OUTPUT CARD -->
+  <div class="output-card" id="outputCard">
+    <div class="output-header">
+      <div class="output-label">📩 Ready to Send <span class="badge">GENERATED</span></div>
+    </div>
+    <div class="message-box" id="messageBox"></div>
+    <div class="action-row">
+      <button class="btn-action btn-copy" onclick="copyMessage()">📋 Copy Message</button>
+      <button class="btn-action btn-whatsapp" onclick="sendWhatsApp()">💬 Open in WhatsApp</button>
+    </div>
+  </div>
+ 
+  <!-- HISTORY CARD -->
+  <div class="history-card" id="historyCard">
+    <div class="history-header">
+      <div class="history-title">📋 Recent Reports</div>
+      <button class="btn-clear" onclick="clearHistory()">Clear all</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+ 
+  <!-- FOOTER -->
+  <div class="footer">
+    Powered by <span>TTC Wardha</span> × AI — Built for teachers who care ♥
+  </div>
+ 
+</div>
+ 
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+ 
+<script>
+  let selectedMood = "Excellent 🌟";
+  let selectedLang = "en";
+  let history = JSON.parse(localStorage.getItem('ttc_history') || '[]');
+ 
+  // Mood buttons
+  document.getElementById('moodRow').addEventListener('click', e => {
+    if (e.target.classList.contains('mood-btn')) {
+      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      selectedMood = e.target.dataset.mood;
+    }
+  });
+ 
+  function setLang(lang) {
+    selectedLang = lang;
+    ['En','Hi','Mr'].forEach(l => document.getElementById('lang'+l).classList.remove('active'));
+    document.getElementById('lang' + lang.charAt(0).toUpperCase() + lang.slice(1)).classList.add('active');
+  }
+ 
+  async function generateReport() {
+    const name = document.getElementById('studentName').value.trim();
+    const cls = document.getElementById('studentClass').value;
+    const subjects = document.getElementById('subjects').value.trim();
+    const present = document.getElementById('attendPresent').value;
+    const total = document.getElementById('attendTotal').value;
+    const strength = document.getElementById('strength').value.trim();
+    const improvement = document.getElementById('improvement').value.trim();
+ 
+    if (!name || !cls || !subjects || !strength) {
+      showToast('Please fill in at least Name, Class, Subjects, and Strengths.');
+      return;
+    }
+ 
+    const btn = document.getElementById('generateBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+ 
+    const attendance = (present && total) ? `${present} out of ${total} classes attended` : 'not recorded';
+ 
+    const langInstructions = {
+      en: "Write entirely in English.",
+      hi: "Write entirely in Hindi (Devanagari script). Use warm, simple Hindi a parent in a small town like Wardha would understand.",
+      mr: "Write entirely in Marathi (Devanagari script). Use warm, simple Marathi a parent in Wardha, Maharashtra would understand."
+    };
+ 
+    const prompt = `You are a warm, caring teacher at Tushar Tuition Classes (TTC), a respected tuition centre in Wardha, Maharashtra, India. You are writing a monthly progress WhatsApp message to a parent about their child.
+ 
+Student: ${name}
+Class: ${cls}
+Subjects: ${subjects}
+Attendance: ${attendance}
+Strengths this month: ${strength}
+Areas we are working on: ${improvement}
+Overall progress: ${selectedMood}
+ 
+${langInstructions[selectedLang]}
+ 
+Write a heartfelt, personal WhatsApp message (not an email). 
+- Start with a warm greeting to the parent (use "Dear Parent" or equivalent)
+- Mention the student's name naturally
+- Celebrate their strengths genuinely and specifically
+- Mention what we are working on in an encouraging, positive way
+- End with a motivating line and a warm sign-off from "Tushar Sir / TTC Wardha"
+- Use 1-2 relevant emojis naturally, not excessively
+- Keep it between 80-120 words
+- Tone: warm teacher, not corporate. Like a trusted family tutor.
+- Do NOT use subject/heading lines. This is a WhatsApp chat message.`;
+ 
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+ 
+      const data = await response.json();
+      const message = data.content?.[0]?.text?.trim();
+ 
+      if (message) {
+        document.getElementById('messageBox').textContent = message;
+        const outputCard = document.getElementById('outputCard');
+        outputCard.classList.add('visible');
+        outputCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+ 
+        // Save to history
+        const entry = {
+          id: Date.now(),
+          name,
+          cls,
+          subjects,
+          mood: selectedMood,
+          message,
+          date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+        };
+        history.unshift(entry);
+        if (history.length > 10) history.pop();
+        localStorage.setItem('ttc_history', JSON.stringify(history));
+        renderHistory();
+ 
+        showToast('✅ Message ready! Copy or send via WhatsApp.');
+      } else {
+        showToast('Something went wrong. Please try again.');
+      }
+    } catch (err) {
+      showToast('Network error. Please check your connection.');
+    }
+ 
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+ 
+  function copyMessage() {
+    const msg = document.getElementById('messageBox').textContent;
+    navigator.clipboard.writeText(msg).then(() => showToast('📋 Copied to clipboard!'));
+  }
+ 
+  function sendWhatsApp() {
+    const msg = document.getElementById('messageBox').textContent;
+    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  }
+ 
+  function renderHistory() {
+    const card = document.getElementById('historyCard');
+    const list = document.getElementById('historyList');
+    if (history.length === 0) { card.classList.remove('visible'); return; }
+    card.classList.add('visible');
+    list.innerHTML = history.map(h => `
+      <div class="history-item" onclick="loadHistory(${h.id})">
+        <div class="history-info">
+          <div class="history-name">${h.name} · ${h.cls}</div>
+          <div class="history-meta">${h.subjects} · ${h.mood} · ${h.date}</div>
+        </div>
+        <span class="history-arrow">→</span>
+      </div>
+    `).join('');
+  }
+ 
+  function loadHistory(id) {
+    const entry = history.find(h => h.id === id);
+    if (!entry) return;
+    document.getElementById('messageBox').textContent = entry.message;
+    document.getElementById('outputCard').classList.add('visible');
+    document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth' });
+  }
+ 
+  function clearHistory() {
+    if (!confirm('Clear all saved reports?')) return;
+    history = [];
+    localStorage.removeItem('ttc_history');
+    renderHistory();
+  }
+ 
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+ 
+  // Init
+  renderHistory();
+</script>
+</body>
+</html>
