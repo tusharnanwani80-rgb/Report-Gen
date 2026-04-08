@@ -495,7 +495,7 @@
     position: fixed;
     bottom: 28px;
     left: 50%;
-    transform: translateX(-50%) translateY(80px);
+    transform: translateX(-50%) translateY(120px);
     background: var(--brown);
     color: white;
     padding: 12px 24px;
@@ -503,8 +503,11 @@
     font-size: 0.88rem;
     font-weight: 500;
     z-index: 999;
-    transition: transform 0.3s ease;
-    white-space: nowrap;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 90vw;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    word-wrap: break-word;
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
 
@@ -653,6 +656,7 @@
   let selectedMood = "Excellent 🌟";
   let selectedLang = "en";
   let history = JSON.parse(localStorage.getItem('ttc_history') || '[]');
+  let toastTimeout;
 
   // Mood buttons
   document.getElementById('moodRow').addEventListener('click', e => {
@@ -695,40 +699,47 @@
       mr: "Write entirely in Marathi (Devanagari script). Use warm, simple Marathi a parent in Wardha, Maharashtra would understand."
     };
 
-    const prompt = `You are a warm, caring teacher at Tushar Tuition Classes (TTC), a respected tuition centre in Wardha, Maharashtra, India. You are writing a monthly progress WhatsApp message to a parent about their child.
+    // Combine everything into ONE simple prompt string. 
+    // This removes the complex systemInstruction object that often gets rejected by proxy firewalls.
+    const fullPrompt = `You are a warm, caring teacher at Tushar Tuition Classes (TTC), a respected tuition centre in Wardha, Maharashtra, India. You are writing a monthly progress WhatsApp message to a parent about their child.
+    
+Rules:
+- Start with a warm greeting to the parent (use "Dear Parent" or equivalent).
+- Mention the student's name naturally.
+- Celebrate their strengths genuinely and specifically.
+- Mention what we are working on in an encouraging, positive way.
+- End with a motivating line and a warm sign-off from "Tushar Sir / TTC Wardha".
+- Use 1-2 relevant emojis naturally, not excessively.
+- Keep it between 80-120 words.
+- Tone: warm teacher, not corporate. Like a trusted family tutor.
+- Do NOT use subject/heading lines. This is a WhatsApp chat message.
+- ${langInstructions[selectedLang]}
 
+Here are the details for the report:
 Student: ${name}
 Class: ${cls}
 Subjects: ${subjects}
 Attendance: ${attendance}
 Strengths this month: ${strength}
 Areas we are working on: ${improvement}
-Overall progress: ${selectedMood}
+Overall progress: ${selectedMood}`;
 
-${langInstructions[selectedLang]}
-
-Write a heartfelt, personal WhatsApp message (not an email). 
-- Start with a warm greeting to the parent (use "Dear Parent" or equivalent)
-- Mention the student's name naturally
-- Celebrate their strengths genuinely and specifically
-- Mention what we are working on in an encouraging, positive way
-- End with a motivating line and a warm sign-off from "Tushar Sir / TTC Wardha"
-- Use 1-2 relevant emojis naturally, not excessively
-- Keep it between 80-120 words
-- Tone: warm teacher, not corporate. Like a trusted family tutor.
-- Do NOT use subject/heading lines. This is a WhatsApp chat message.`;
-
-    const apiKey = ""; // Added automatically in the running environment
+    const apiKey = ""; // Injected automatically by the sandbox
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
     
+    // Simplest possible payload shape
     const payload = {
-        contents: [{ parts: [{ text: prompt }] }]
+        contents: [{ parts: [{ text: fullPrompt }] }]
     };
 
     let success = false;
     let responseData = null;
-    const maxRetries = 5;
-    const delays = [1000, 2000, 4000, 8000, 16000];
+    let lastStatus = null;
+    let errorMessage = "";
+    
+    // 3 Retries
+    const maxRetries = 3;
+    const delays = [1000, 2000, 4000];
 
     try {
       for (let i = 0; i < maxRetries; i++) {
@@ -739,13 +750,28 @@ Write a heartfelt, personal WhatsApp message (not an email).
             body: JSON.stringify(payload)
           });
           
+          lastStatus = response.status;
+
           if (response.ok) {
             responseData = await response.json();
             success = true;
             break;
+          } else {
+             // If it fails, capture EXACTLY what the server said to debug
+             try {
+                 const errData = await response.json();
+                 errorMessage = errData.error?.message || JSON.stringify(errData);
+             } catch(e) {
+                 errorMessage = "Server returned HTML/Non-JSON response";
+             }
+             
+             // Don't retry on 400 errors (Bad Request), just break early
+             if (lastStatus === 400 || lastStatus === 403) {
+                 break; 
+             }
           }
         } catch (err) {
-          // Silent catch for retries
+          errorMessage = err.message; // e.g. "Failed to fetch" (CORS/Network)
         }
         
         if (!success && i < maxRetries - 1) {
@@ -778,10 +804,17 @@ Write a heartfelt, personal WhatsApp message (not an email).
 
         showToast('✅ Message ready! Copy or send via WhatsApp.');
       } else {
-        showToast('API request failed. Please check your connection and try again.');
+        // Detailed error display
+        if (lastStatus === 502 || lastStatus === 503) {
+            showToast('Google servers are temporarily overloaded (Error 502). Try again in 30s.');
+        } else {
+            // Trim error message so it fits in the toast
+            const shortErr = errorMessage.length > 60 ? errorMessage.substring(0, 60) + '...' : errorMessage;
+            showToast(`API Failed (Code: ${lastStatus || 'Network'}): ${shortErr}`);
+        }
       }
     } catch (err) {
-      showToast('Network error. Please check your connection.');
+      showToast(`Network error: ${err.message}`);
     }
 
     btn.classList.remove('loading');
@@ -790,7 +823,6 @@ Write a heartfelt, personal WhatsApp message (not an email).
 
   function copyMessage() {
     const msg = document.getElementById('messageBox').textContent;
-    // Fallback for document copying, works better inside isolated environments
     const textarea = document.createElement('textarea');
     textarea.value = msg;
     document.body.appendChild(textarea);
@@ -836,7 +868,6 @@ Write a heartfelt, personal WhatsApp message (not an email).
   }
 
   function clearHistory() {
-    // using custom modal or simple confirm 
     if (!confirm('Clear all saved reports?')) return;
     history = [];
     localStorage.removeItem('ttc_history');
@@ -847,7 +878,8 @@ Write a heartfelt, personal WhatsApp message (not an email).
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3000);
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => t.classList.remove('show'), 6000); // 6 seconds so you can read the error
   }
 
   // Init
@@ -856,5 +888,7 @@ Write a heartfelt, personal WhatsApp message (not an email).
 </body>
 </html>
 
+
 ```
+
 
