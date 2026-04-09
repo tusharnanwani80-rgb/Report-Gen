@@ -632,7 +632,7 @@ let scriptUrl = '';
 ══════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('ttc_panel_url') || '';
-  const hardcoded = APPS_SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbxilDWHWXMAs3cUS3YCLxEcdA4JO3b3Bom396-4CxkxUOkkVRqKI-jJEFSBDhTgmeT2sA/exec' ? APPS_SCRIPT_URL : '';
+  const hardcoded = APPS_SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbzXaLch9P7Ej4jDCGlkwNJzwcIGSVNaN59MOeQenSB7ekj2_YmI0M89IV89eivZAInNxg/exec' ? APPS_SCRIPT_URL : '';
   const url = hardcoded || saved;
   if (url) {
     document.getElementById('scriptUrlInput').value = url;
