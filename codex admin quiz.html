@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TTC Teacher Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=DM+Sans:wght@400;500;600;700;800;900&family=Righteous&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+:root {
+  --blue:   #4361EE;
+  --orange: #FF6B35;
+  --lime:   #C8FF00;
+  --pink:   #FF3D8A;
+  --green:  #25D366;
+  --red:    #FF3D3D;
+  --white:  #FFFFFF;
+  --off:    #F5F4FF;
+  --dark:   #111118;
+  --grey:   #6B6B80;
+  --light:  #EDEDF7;
+  --card:   #FFFFFF;
+}
+ 
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--off);
+  background-image: repeating-linear-gradient(-45deg, transparent, transparent 18px, rgba(67,97,238,0.04) 18px, rgba(67,97,238,0.04) 19px);
+  min-height: 100vh;
+  color: var(--dark);
+}
+ 
+/* ── HEADER ── */
+.header {
+  background: var(--dark);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.header-logo {
+  width: 42px; height: 42px; border-radius: 50%;
+  border: 2px solid var(--orange);
+}
+.header-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 22px;
+  color: var(--white);
+  line-height: 1;
+}
+.header-title span { color: var(--orange); }
+.header-sub {
+  font-size: 11px; font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.header-badge {
+  margin-left: auto;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 50px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--lime);
+  letter-spacing: 1px;
+}
+ 
+/* ── SETUP SCREEN ── */
+#setupScreen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: calc(100vh - 74px);
+  padding: 40px 20px;
+}
+.setup-card {
+  background: var(--card);
+  border: 2.5px solid var(--dark);
+  border-radius: 24px;
+  box-shadow: 6px 6px 0 var(--dark);
+  padding: 40px 36px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+}
+.setup-icon { font-size: 56px; margin-bottom: 16px; }
+.setup-card h2 {
+  font-family: 'Righteous', cursive;
+  font-size: 26px; color: var(--dark);
+  margin-bottom: 8px;
+}
+.setup-card p {
+  font-size: 14px; color: var(--grey);
+  font-weight: 500; line-height: 1.6;
+  margin-bottom: 24px;
+}
+.url-input {
+  width: 100%; padding: 14px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: var(--dark); background: var(--off);
+  border: 2.5px solid var(--dark);
+  border-radius: 14px; outline: none;
+  box-shadow: 3px 3px 0 var(--dark);
+  margin-bottom: 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.url-input:focus { border-color: var(--blue); box-shadow: 3px 3px 0 var(--blue); }
+.btn {
+  display: inline-block; width: 100%; padding: 14px 22px;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 800;
+  border: 2.5px solid var(--dark); border-radius: 14px; cursor: pointer;
+  text-align: center; letter-spacing: 0.3px;
+  transition: transform 0.12s, box-shadow 0.12s;
+  box-shadow: 4px 4px 0 var(--dark);
+}
+.btn:hover  { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--dark); }
+.btn:active { transform: translate(2px,2px);   box-shadow: 2px 2px 0 var(--dark); }
+.btn-blue   { background: var(--blue); color: white; }
+.btn-ghost  { background: transparent; color: var(--grey); border-color: var(--light); box-shadow: 4px 4px 0 var(--light); margin-top: 10px; }
+.btn-ghost:hover { border-color: var(--dark); color: var(--dark); box-shadow: 4px 4px 0 var(--dark); }
+.setup-hint {
+  margin-top: 20px;
+  background: #FFF8DC;
+  border: 2px solid var(--orange);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B4500;
+  text-align: left;
+  line-height: 1.6;
+}
+ 
+/* ── DASHBOARD ── */
+#dashboard { display: none; padding: 24px 20px; max-width: 1200px; margin: 0 auto; }
+ 
+/* Stats Row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--card);
+  border: 2.5px solid var(--dark);
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 4px 4px 0 var(--dark);
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  opacity: 0.07;
+}
+.stat-card.blue  { border-color: var(--blue); box-shadow: 4px 4px 0 var(--blue); }
+.stat-card.blue::after  { background: var(--blue); }
+.stat-card.orange{ border-color: var(--orange); box-shadow: 4px 4px 0 var(--orange); }
+.stat-card.orange::after{ background: var(--orange); }
+.stat-card.green { border-color: var(--green); box-shadow: 4px 4px 0 var(--green); }
+.stat-card.green::after { background: var(--green); }
+.stat-card.red   { border-color: var(--red); box-shadow: 4px 4px 0 var(--red); }
+.stat-card.red::after   { background: var(--red); }
+.stat-card.pink  { border-color: var(--pink); box-shadow: 4px 4px 0 var(--pink); }
+.stat-card.pink::after  { background: var(--pink); }
+.stat-label { font-size: 10px; font-weight: 700; color: var(--grey); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+.stat-val   { font-family: 'Righteous', cursive; font-size: 36px; color: var(--dark); line-height: 1; }
+.stat-icon  { font-size: 22px; position: absolute; top: 16px; right: 16px; }
+ 
+/* Controls */
+.controls {
+  background: var(--card);
+  border: 2.5px solid var(--dark);
+  border-radius: 18px;
+  box-shadow: 4px 4px 0 var(--dark);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.ctrl-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
+.ctrl-label { font-size: 10px; font-weight: 800; color: var(--grey); text-transform: uppercase; letter-spacing: 1px; }
+.ctrl-select, .ctrl-input {
+  padding: 9px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: var(--dark); background: var(--off);
+  border: 2px solid var(--dark);
+  border-radius: 10px; outline: none;
+  cursor: pointer;
+}
+.ctrl-select:focus, .ctrl-input:focus { border-color: var(--blue); }
+.refresh-btn {
+  padding: 9px 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 800;
+  background: var(--blue); color: white;
+  border: 2px solid var(--dark);
+  border-radius: 10px; cursor: pointer;
+  box-shadow: 3px 3px 0 var(--dark);
+  transition: transform 0.12s, box-shadow 0.12s;
+  align-self: flex-end;
+}
+.refresh-btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--dark); }
+.change-url-btn {
+  padding: 9px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 700;
+  background: transparent; color: var(--grey);
+  border: 2px solid var(--light);
+  border-radius: 10px; cursor: pointer;
+  align-self: flex-end;
+  transition: border-color 0.15s, color 0.15s;
+}
+.change-url-btn:hover { border-color: var(--dark); color: var(--dark); }
+ 
+/* Results count */
+.results-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; padding: 0 2px;
+}
+.results-count {
+  font-size: 13px; font-weight: 700; color: var(--grey);
+}
+.results-count span { color: var(--blue); font-weight: 800; }
+ 
+/* TABLE */
+.table-wrap {
+  background: var(--card);
+  border: 2.5px solid var(--dark);
+  border-radius: 18px;
+  box-shadow: 4px 4px 0 var(--dark);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.table-scroll { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+thead {
+  background: var(--dark);
+}
+thead th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+}
+tbody tr {
+  border-bottom: 1px solid var(--light);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+tbody tr:hover { background: #F0F3FF; }
+tbody tr:last-child { border-bottom: none; }
+tbody td {
+  padding: 12px 16px;
+  color: var(--dark);
+  font-weight: 600;
+  vertical-align: middle;
+}
+.td-name { font-weight: 800; }
+.td-subject {
+  font-size: 11px;
+  background: #EEF1FF;
+  color: var(--blue);
+  padding: 3px 10px;
+  border-radius: 50px;
+  border: 1.5px solid var(--blue);
+  white-space: nowrap;
+  display: inline-block;
+  font-weight: 700;
+}
+.td-chapter { font-size: 12px; color: var(--grey); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.score-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 50px;
+  font-size: 12px; font-weight: 800;
+  border: 1.5px solid currentColor;
+}
+.score-pill.great  { color: #2A9D34; background: #EAFFDA; }
+.score-pill.good   { color: #2466CC; background: #E0F0FF; }
+.score-pill.okay   { color: #BB7D00; background: #FFF8DC; }
+.score-pill.poor   { color: #CC2424; background: #FFEAEA; }
+.time-cell { font-size: 12px; color: var(--grey); white-space: nowrap; }
+.flag-cell { text-align: center; }
+.flag-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 50px;
+  font-size: 11px; font-weight: 800;
+  white-space: nowrap;
+}
+.flag-badge.danger { background: #FFEAEA; color: #CC2424; border: 1.5px solid #CC2424; }
+.flag-badge.safe   { background: #EAFFDA; color: #2A9D34; border: 1.5px solid #2A9D34; }
+.attempt-badge {
+  display: inline-block;
+  padding: 3px 10px; border-radius: 50px;
+  font-size: 11px; font-weight: 800;
+  background: #FFF8DC; color: #BB7D00;
+  border: 1.5px solid #BB7D00;
+}
+.attempt-badge.first { background: var(--off); color: var(--grey); border-color: var(--grey); }
+.detail-hint { font-size: 11px; color: var(--grey); font-style: italic; }
+.timestamp-cell { font-size: 11px; color: var(--grey); white-space: nowrap; }
+ 
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--grey);
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; font-weight: 600; }
+ 
+/* Loading */
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 4px solid var(--light);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-state p { font-size: 14px; font-weight: 600; color: var(--grey); }
+ 
+/* Error state */
+.error-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--red);
+}
+.error-state p { font-size: 14px; font-weight: 700; }
+.error-state small { font-size: 12px; color: var(--grey); margin-top: 8px; display: block; }
+ 
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(17,17,24,0.75);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--card);
+  border: 2.5px solid var(--dark);
+  border-radius: 24px;
+  box-shadow: 8px 8px 0 var(--dark);
+  width: 100%; max-width: 560px;
+  max-height: 90vh; overflow-y: auto;
+  transform: scale(0.9);
+  transition: transform 0.2s;
+}
+.modal-overlay.show .modal { transform: scale(1); }
+.modal-header {
+  padding: 24px 24px 0;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px;
+}
+.modal-close {
+  width: 36px; height: 36px;
+  background: var(--light); border: 2px solid var(--dark);
+  border-radius: 10px; cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 2px 2px 0 var(--dark); flex-shrink: 0;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.modal-close:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--dark); }
+.modal-name {
+  font-family: 'Righteous', cursive;
+  font-size: 22px; color: var(--dark);
+}
+.modal-sub {
+  font-size: 12px; font-weight: 600; color: var(--grey); margin-top: 4px;
+}
+.modal-stats {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 16px 24px;
+}
+.modal-stat {
+  background: var(--off); border: 1.5px solid var(--dark);
+  border-radius: 10px; padding: 8px 14px;
+  font-size: 12px; font-weight: 700;
+}
+.modal-stat span { font-weight: 800; color: var(--blue); }
+.modal-stat.cheat { border-color: var(--red); background: #FFEAEA; }
+.modal-stat.cheat span { color: var(--red); }
+ 
+.modal-section-title {
+  padding: 4px 24px 12px;
+  font-family: 'Righteous', cursive;
+  font-size: 15px; color: var(--dark);
+  display: flex; align-items: center; gap: 8px;
+}
+.modal-divider {
+  border: none; border-top: 2px solid var(--light);
+  margin: 8px 24px 16px;
+}
+.wrong-item {
+  margin: 0 24px 14px;
+  background: #FFEAEA;
+  border: 2px solid var(--pink);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.wrong-q {
+  font-size: 13px; font-weight: 700; color: var(--dark);
+  line-height: 1.5; margin-bottom: 10px;
+}
+.wrong-row {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 12px; font-weight: 600; line-height: 1.5;
+  margin-bottom: 4px;
+}
+.wrong-row:last-child { margin-bottom: 0; }
+.wrong-label {
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1px; padding: 2px 8px; border-radius: 50px; flex-shrink: 0;
+  margin-top: 1px;
+}
+.wrong-label.theirs { background: #FFEAEA; color: var(--pink); border: 1px solid var(--pink); }
+.wrong-label.correct { background: #EAFFDA; color: #2A9D34; border: 1px solid #2A9D34; }
+.no-wrong {
+  margin: 0 24px 20px;
+  background: #EAFFDA;
+  border: 2px solid #2A9D34;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  font-size: 14px; font-weight: 700; color: #2A9D34;
+}
+.modal-footer { padding: 4px 24px 24px; }
+ 
+/* Responsive */
+@media (max-width: 600px) {
+  .header { padding: 12px 16px; }
+  #dashboard { padding: 16px 12px; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  thead th:nth-child(5),
+  thead th:nth-child(7),
+  tbody td:nth-child(5),
+  tbody td:nth-child(7) { display: none; }
+}
+</style>
+</head>
+<body>
+ 
+<!-- HEADER -->
+<div class="header">
+  <img class="header-logo" src="https://i.postimg.cc/x9mDND2Q/Ttc-logo.png" alt="TTC">
+  <div>
+    <div class="header-title">TTC <span>Teacher Panel</span></div>
+    <div class="header-sub">Tushar Tuition Classes · Wardha</div>
+  </div>
+  <div class="header-badge" id="lastRefreshed">Not loaded</div>
+</div>
+ 
+<!-- SETUP SCREEN -->
+<div id="setupScreen">
+  <div class="setup-card">
+    <div class="setup-icon">🔗</div>
+    <h2>Connect Your Dashboard</h2>
+    <p>Paste your Google Apps Script Web App URL below to load student quiz data.</p>
+    <input
+      type="text"
+      id="scriptUrlInput"
+      class="url-input"
+      placeholder="https://script.google.com/macros/s/...../exec"
+      autocomplete="off"
+    >
+    <button class="btn btn-blue" onclick="connectAndLoad()">🚀 Connect & Load Data</button>
+    <button class="btn btn-ghost" onclick="useDemoData()">👀 Preview with Demo Data</button>
+    <div class="setup-hint">
+      📋 <strong>Where to find the URL?</strong><br>
+      Follow the <em>TTC_Apps_Script_Setup.txt</em> guide → Steps 2–4.<br>
+      After deploying, copy the "Web App URL" and paste it above.
+    </div>
+  </div>
+</div>
+ 
+<!-- DASHBOARD -->
+<div id="dashboard">
+ 
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card blue">
+      <div class="stat-label">Total Attempts</div>
+      <div class="stat-val" id="statTotal">0</div>
+      <div class="stat-icon">📝</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">Unique Students</div>
+      <div class="stat-val" id="statStudents">0</div>
+      <div class="stat-icon">👥</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Avg Score</div>
+      <div class="stat-val" id="statAvg">0%</div>
+      <div class="stat-icon">📊</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Cheat Flags 🚨</div>
+      <div class="stat-val" id="statFlags">0</div>
+      <div class="stat-icon">⚠️</div>
+    </div>
+    <div class="stat-card pink">
+      <div class="stat-label">Repeat Attempts</div>
+      <div class="stat-val" id="statRepeats">0</div>
+      <div class="stat-icon">🔁</div>
+    </div>
+  </div>
+ 
+  <!-- Controls -->
+  <div class="controls">
+    <div class="ctrl-group">
+      <div class="ctrl-label">Search Student</div>
+      <input type="text" id="searchInput" class="ctrl-input" placeholder="Type name..." oninput="applyFilters()">
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label">Subject</div>
+      <select id="filterSubject" class="ctrl-select" onchange="applyFilters()">
+        <option value="">All Subjects</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label">Chapter</div>
+      <select id="filterChapter" class="ctrl-select" onchange="applyFilters()">
+        <option value="">All Chapters</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label">Show Only</div>
+      <select id="filterFlag" class="ctrl-select" onchange="applyFilters()">
+        <option value="">All Results</option>
+        <option value="flagged">🚨 Flagged Only</option>
+        <option value="repeat">🔁 Repeat Attempts</option>
+        <option value="low">📉 Below 50%</option>
+      </select>
+    </div>
+    <button class="refresh-btn" onclick="refreshData()">↺ Refresh</button>
+    <button class="change-url-btn" onclick="changeUrl()">⚙ Change URL</button>
+  </div>
+ 
+  <!-- Results meta -->
+  <div class="results-meta">
+    <div class="results-count">Showing <span id="showingCount">0</span> results</div>
+    <div style="font-size:11px;color:var(--grey);font-weight:600;">Click any row to see wrong answers</div>
+  </div>
+ 
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Subject / Chapter</th>
+            <th>Score</th>
+            <th>Time</th>
+            <th>Tab Switches</th>
+            <th>Attempt</th>
+            <th>Date & Time</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div id="tableState"></div>
+  </div>
+ 
+</div>
+ 
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <div>
+        <div class="modal-name" id="modalName">Student Name</div>
+        <div class="modal-sub" id="modalSub">Subject · Chapter</div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-stats" id="modalStats"></div>
+    <hr class="modal-divider">
+    <div class="modal-section-title" id="modalWrongTitle">❌ Wrong Answers</div>
+    <div id="modalWrongList"></div>
+    <div class="modal-footer">
+      <button class="btn btn-blue" onclick="downloadCurrentRunPdf()" style="width:auto;padding:10px 24px;margin-right:8px;">Download PDF Report</button>
+      <button class="btn btn-ghost" onclick="closeModalDirect()" style="width:auto;padding:10px 24px;">Close</button>
+    </div>
+  </div>
+</div>
+ 
+<script>
+/* ══════════════════════════════════════
+   CONFIG & STATE
+══════════════════════════════════════ */
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzrJ7T76IeXnPwbqTqV8Mksc7JRnbaVBgbUXVeX1fBXLWtdxS6XOgr4wC0_LqILaGj/exec'; // ← PASTE YOUR URL HERE
+let allData = [];
+let filteredData = [];
+let scriptUrl = '';
+let currentDetailRecord = null;
+const TTC_ASSETS = {
+  logo: 'https://i.postimg.cc/x9mDND2Q/Ttc-logo.png',
+  qr: 'https://i.postimg.cc/YCWwPPqN/TTC-qr.jpg',
+  watermark: 'https://i.postimg.cc/9F434kTW/ttc-watermark-png.png'
+};
+ 
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('ttc_panel_url') || '';
+  const hardcoded = APPS_SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbzXaLch9P7Ej4jDCGlkwNJzwcIGSVNaN59MOeQenSB7ekj2_YmI0M89IV89eivZAInNxg/exec' ? APPS_SCRIPT_URL : '';
+  const url = hardcoded || saved;
+  if (url) {
+    document.getElementById('scriptUrlInput').value = url;
+    scriptUrl = url;
+    showDashboard();
+    loadData();
+  }
+});
+ 
+function connectAndLoad() {
+  const val = document.getElementById('scriptUrlInput').value.trim();
+  if (!val || !val.startsWith('https://')) {
+    alert('Please paste a valid Google Apps Script URL starting with https://');
+    return;
+  }
+  scriptUrl = val;
+  localStorage.setItem('ttc_panel_url', val);
+  showDashboard();
+  loadData();
+}
+ 
+function showDashboard() {
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+}
+ 
+function changeUrl() {
+  document.getElementById('setupScreen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+}
+ 
+/* ══════════════════════════════════════
+   DATA LOADING
+══════════════════════════════════════ */
+function refreshData() { loadData(); }
+ 
+async function loadData() {
+  showTableState('loading');
+  try {
+    const url = scriptUrl || APPS_SCRIPT_URL;
+    const res = await fetch(url + '?t=' + Date.now());
+    const json = await res.json();
+    if (json.status !== 'ok') throw new Error(json.msg || 'Unknown error');
+    allData = (json.data || []).reverse(); // newest first
+    buildFilters();
+    applyFilters();
+    updateStats();
+    const now = new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
+    document.getElementById('lastRefreshed').textContent = '↺ ' + now;
+  } catch(err) {
+    showTableState('error', err.message);
+  }
+}
+ 
+function showTableState(type, msg='') {
+  const el = document.getElementById('tableState');
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  if (type === 'loading') {
+    el.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Loading student data...</p></div>`;
+  } else if (type === 'empty') {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>No results found. Students haven't attempted this quiz yet.</p></div>`;
+  } else if (type === 'error') {
+    el.innerHTML = `<div class="error-state"><p>⚠️ Could not load data</p><small>${msg}</small><small style="margin-top:4px;">Make sure your Apps Script URL is correct and the deployment allows "Anyone" access.</small></div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+ 
+/* ══════════════════════════════════════
+   FILTERS & TABLE
+══════════════════════════════════════ */
+function buildFilters() {
+  const subjects = [...new Set(allData.map(r => r['Subject'] || '').filter(Boolean))].sort();
+  const chapters = [...new Set(allData.map(r => r['Chapter'] || '').filter(Boolean))].sort();
+ 
+  const fSub = document.getElementById('filterSubject');
+  const fCh  = document.getElementById('filterChapter');
+  const selSub = fSub.value, selCh = fCh.value;
+ 
+  fSub.innerHTML = '<option value="">All Subjects</option>' + subjects.map(s => `<option value="${s}" ${s===selSub?'selected':''}>${s}</option>`).join('');
+  fCh.innerHTML  = '<option value="">All Chapters</option>' + chapters.map(c => `<option value="${c}" ${c===selCh?'selected':''}>${c}</option>`).join('');
+}
+ 
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const sub    = document.getElementById('filterSubject').value;
+  const ch     = document.getElementById('filterChapter').value;
+  const flag   = document.getElementById('filterFlag').value;
+ 
+  filteredData = allData.filter(r => {
+    const name = (r['Student Name'] || '').toLowerCase();
+    if (search && !name.includes(search)) return false;
+    if (sub && r['Subject'] !== sub) return false;
+    if (ch  && r['Chapter']  !== ch)  return false;
+    if (flag === 'flagged' && parseInt(r['Tab Switches'] || 0) <= 2) return false;
+    if (flag === 'repeat'  && parseInt(r['Attempt No.'] || 1)  <= 1) return false;
+    if (flag === 'low'     && parseInt(r['Percentage (%)'] || 0) >= 50) return false;
+    return true;
+  });
+ 
+  renderTable();
+  document.getElementById('showingCount').textContent = filteredData.length;
+}
+ 
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  showTableState('clear');
+ 
+  if (!filteredData.length) {
+    showTableState('empty');
+    return;
+  }
+ 
+  tbody.innerHTML = filteredData.map((r, i) => {
+    const pct       = parseInt(r['Percentage (%)'] || 0);
+    const tabs      = parseInt(r['Tab Switches']   || 0);
+    const attempt   = parseInt(r['Attempt No.']    || 1);
+    const score     = r['Score'] || 0;
+    const total     = r['Total Questions'] || 0;
+    const name      = r['Student Name'] || 'Unknown';
+    const subject   = r['Subject'] || '';
+    const chapter   = r['Chapter'] || '';
+    const timeSec   = parseInt(r['Time Taken (sec)'] || 0);
+    const timestamp = r['Timestamp'] || '';
+ 
+    const timeStr = timeSec > 60 
+      ? `${Math.floor(timeSec/60)}m ${timeSec%60}s`
+      : `${timeSec}s`;
+ 
+    let scoreClass = 'poor';
+    if (pct >= 90) scoreClass = 'great';
+    else if (pct >= 75) scoreClass = 'good';
+    else if (pct >= 50) scoreClass = 'okay';
+ 
+    const flagHTML = tabs > 2
+      ? `<span class="flag-badge danger">🚨 ${tabs} switches</span>`
+      : `<span class="flag-badge safe">✓ Clean</span>`;
+ 
+    const attemptHTML = attempt > 1
+      ? `<span class="attempt-badge">🔁 #${attempt}</span>`
+      : `<span class="attempt-badge first">#1</span>`;
+ 
+    return `<tr onclick="showDetail(${i})">
+      <td style="color:var(--grey);font-size:12px;font-weight:700;">${i+1}</td>
+      <td class="td-name">${escHtml(name)}</td>
+      <td>
+        <span class="td-subject">${escHtml(subject)}</span><br>
+        <span class="td-chapter">${escHtml(chapter)}</span>
+      </td>
+      <td><span class="score-pill ${scoreClass}">${score}/${total} · ${pct}%</span></td>
+      <td class="time-cell">⏱ ${timeStr}</td>
+      <td class="flag-cell">${flagHTML}</td>
+      <td>${attemptHTML}</td>
+      <td class="timestamp-cell">${timestamp}</td>
+      <td class="detail-hint">→ Details</td>
+    </tr>`;
+  }).join('');
+}
+ 
+/* ══════════════════════════════════════
+   STATS
+══════════════════════════════════════ */
+function updateStats() {
+  const total   = allData.length;
+  const names   = new Set(allData.map(r => (r['Student Name'] || '').trim().toLowerCase()));
+  const avgPct  = total ? Math.round(allData.reduce((s,r) => s + parseInt(r['Percentage (%)']||0), 0) / total) : 0;
+  const flags   = allData.filter(r => parseInt(r['Tab Switches'] || 0) > 2).length;
+  const repeats = allData.filter(r => parseInt(r['Attempt No.'] || 1) > 1).length;
+ 
+  document.getElementById('statTotal').textContent    = total;
+  document.getElementById('statStudents').textContent = names.size;
+  document.getElementById('statAvg').textContent      = avgPct + '%';
+  document.getElementById('statFlags').textContent    = flags;
+  document.getElementById('statRepeats').textContent  = repeats;
+}
+ 
+/* ══════════════════════════════════════
+   DETAIL MODAL
+══════════════════════════════════════ */
+function showDetail(idx) {
+  const r       = filteredData[idx];
+  currentDetailRecord = r;
+  const name    = r['Student Name'] || 'Unknown';
+  const subject = r['Subject']  || '';
+  const chapter = r['Chapter']  || '';
+  const score   = r['Score']    || 0;
+  const total   = r['Total Questions'] || 0;
+  const pct     = parseInt(r['Percentage (%)'] || 0);
+  const timeSec = parseInt(r['Time Taken (sec)'] || 0);
+  const tabs    = parseInt(r['Tab Switches'] || 0);
+  const attempt = parseInt(r['Attempt No.'] || 1);
+  const ts      = r['Timestamp'] || '';
+ 
+  const timeStr = timeSec > 60 
+    ? `${Math.floor(timeSec/60)}m ${timeSec%60}s`
+    : `${timeSec}s`;
+ 
+  document.getElementById('modalName').textContent = name;
+  document.getElementById('modalSub').textContent  = `${subject} · ${chapter}`;
+ 
+  document.getElementById('modalStats').innerHTML = `
+    <div class="modal-stat">Score: <span>${score}/${total}</span></div>
+    <div class="modal-stat">Percentage: <span>${pct}%</span></div>
+    <div class="modal-stat">Time Taken: <span>${timeStr}</span></div>
+    <div class="modal-stat ${tabs>2?'cheat':''}">Tab Switches: <span>${tabs}</span>${tabs>2?' 🚨':''}</div>
+    <div class="modal-stat">Attempt No.: <span>#${attempt}</span></div>
+    <div class="modal-stat">Date: <span>${ts}</span></div>
+  `;
+ 
+  let wrongAnswers = [];
+  try {
+    const raw = r['Wrong Answers (JSON)'] || '[]';
+    wrongAnswers = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch(e) { wrongAnswers = []; }
+ 
+  document.getElementById('modalWrongTitle').textContent = 
+    `❌ Wrong Answers (${wrongAnswers.length})`;
+ 
+  if (!wrongAnswers.length) {
+    document.getElementById('modalWrongList').innerHTML =
+      `<div class="no-wrong">🎉 No wrong answers! Perfect score.</div>`;
+  } else {
+    document.getElementById('modalWrongList').innerHTML = wrongAnswers.map(w =>
+      `<div class="wrong-item">
+        <div class="wrong-q">Q: ${escHtml(w.question || '')}</div>
+        <div class="wrong-row">
+          <span class="wrong-label theirs">Their Answer</span>
+          <span>${escHtml(w.yourAnswer || '')}</span>
+        </div>
+        <div class="wrong-row">
+          <span class="wrong-label correct">Correct</span>
+          <span>${escHtml(w.correct || '')}</span>
+        </div>
+      </div>`
+    ).join('');
+  }
+ 
+  document.getElementById('modalOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+ 
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+async function downloadCurrentRunPdf() {
+  if (!currentDetailRecord) {
+    alert('Open a student result first.');
+    return;
+  }
+  const r = currentDetailRecord;
+  const answers = getAnswerLogFromRecord(r);
+  const total = parseInt(r['Total Questions'] || 0);
+  const report = {
+    title: 'Teacher Run Report',
+    name: r['Student Name'] || 'Unknown',
+    subject: r['Subject'] || '',
+    chapter: r['Chapter'] || '',
+    score: r['Score'] || 0,
+    total: total,
+    percentage: parseInt(r['Percentage (%)'] || 0),
+    questionsAttempted: parseInt(r['Questions Attempted'] || total || answers.length || 0),
+    timeTaken: parseInt(r['Time Taken (sec)'] || 0),
+    tabSwitches: parseInt(r['Tab Switches'] || 0),
+    attempt: parseInt(r['Attempt No.'] || 1),
+    timestamp: r['Timestamp'] || '',
+    answers: answers
+  };
+  await createTtcQuizPdf(report, `TTC_${safePdfName(report.name)}_${safePdfName(report.chapter)}_Teacher_Report.pdf`);
+}
+
+function getAnswerLogFromRecord(r) {
+  let answers = [];
+  try {
+    const raw = r['Answer Log (JSON)'] || r['Answers (JSON)'] || '[]';
+    answers = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch(e) {
+    answers = [];
+  }
+  if (Array.isArray(answers) && answers.length) return answers;
+  try {
+    const rawWrong = r['Wrong Answers (JSON)'] || '[]';
+    const wrong = typeof rawWrong === 'string' ? JSON.parse(rawWrong) : rawWrong;
+    if (Array.isArray(wrong) && wrong.length) {
+      return wrong.map((w, i) => ({
+        questionNo: i + 1,
+        question: w.question || '',
+        yourAnswer: w.yourAnswer || '',
+        correct: w.correct || '',
+        isCorrect: false,
+        explanation: w.explanation || ''
+      }));
+    }
+  } catch(e) {}
+  return [];
+}
+
+async function createTtcQuizPdf(report, fileName){
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('PDF maker is still loading. Please check your internet connection and try again.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 48;
+  const bottomLimit = pageH - 70;
+  const colors = {
+    ink: '#151721',
+    muted: '#697083',
+    soft: '#F6F7FB',
+    line: '#E5E8F0',
+    blue: '#2847D7',
+    orange: '#F36B2A',
+    green: '#138A45',
+    red: '#C7365C',
+    paleGreen: '#EAF8EF',
+    paleRed: '#FFF0F4'
+  };
+  const assets = await loadPdfAssets();
+  let y = 118;
+
+  function clean(value){
+    return String(value ?? '')
+      .replace(/[^\x09\x0A\x0D\x20-\x7E\u00A0-\u024F]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function pageBase(){
+    doc.setFillColor('#FFFFFF');
+    doc.rect(0, 0, pageW, pageH, 'F');
+    doc.setFillColor(colors.soft);
+    doc.rect(0, 0, pageW, 92, 'F');
+    doc.setDrawColor(colors.line);
+    doc.setLineWidth(1);
+    doc.line(margin, 92, pageW - margin, 92);
+    if (assets.logo) {
+      try { doc.addImage(assets.logo, 'PNG', margin, 22, 48, 48); } catch(e) { drawLogoFallback(); }
+    } else {
+      drawLogoFallback();
+    }
+    doc.setTextColor(colors.ink);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(24);
+    doc.text('TTC Quiz Results', margin + 64, 42);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(colors.muted);
+    doc.text('Tushar Tuition Classes, Wardha', margin + 64, 62);
+    if (assets.qr) {
+      try { doc.addImage(assets.qr, 'JPEG', pageW - margin - 48, 22, 48, 48); } catch(e) {}
+    }
+  }
+
+  function drawLogoFallback(){
+    doc.setFillColor(colors.orange);
+    doc.circle(margin + 26, 46, 26, 'F');
+    doc.setTextColor('#FFFFFF');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('TTC', margin + 10, 51);
+  }
+
+  function newPage(){
+    doc.addPage();
+    pageBase();
+    y = 118;
+  }
+
+  function need(space){
+    if (y + space > bottomLimit) newPage();
+  }
+
+  function wrap(text, width, size, weight='normal'){
+    doc.setFont('helvetica', weight);
+    doc.setFontSize(size);
+    return doc.splitTextToSize(clean(text), width);
+  }
+
+  function drawInfoCard(label, value, x, boxY, w, h=64){
+    doc.setFillColor('#FFFFFF');
+    doc.roundedRect(x, boxY, w, h, 10, 10, 'F');
+    doc.setDrawColor(colors.line);
+    doc.roundedRect(x, boxY, w, h, 10, 10, 'S');
+    doc.setTextColor(colors.muted);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text(clean(label).toUpperCase(), x + 14, boxY + 21);
+    const lines = wrap(value, w - 28, 14, 'bold').slice(0, 2);
+    doc.setTextColor(colors.ink);
+    doc.setFontSize(14);
+    doc.text(lines, x + 14, boxY + 43);
+  }
+
+  function drawBadge(text, x, badgeY, fill, color){
+    doc.setFillColor(fill);
+    doc.roundedRect(x, badgeY, 84, 24, 12, 12, 'F');
+    doc.setTextColor(color);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text(text, x + 13, badgeY + 16);
+  }
+
+  function secondsToText(sec){
+    sec = parseInt(sec || 0);
+    return sec >= 60 ? `${Math.floor(sec / 60)}m ${sec % 60}s` : `${sec}s`;
+  }
+
+  function drawWatermarkAndFooters(){
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      if (assets.watermark) {
+        try {
+          doc.setGState(new doc.GState({ opacity: 0.035 }));
+          doc.addImage(assets.watermark, 'PNG', pageW / 2 - 190, 220, 380, 380);
+          doc.setGState(new doc.GState({ opacity: 1 }));
+        } catch(e) {}
+      }
+      doc.setDrawColor(colors.line);
+      doc.line(margin, pageH - 46, pageW - margin, pageH - 46);
+      doc.setTextColor(colors.muted);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text('Generated by TTC Quiz System', margin, pageH - 26);
+      doc.text(`Page ${i} of ${totalPages}`, pageW - margin - 54, pageH - 26);
+    }
+  }
+
+  pageBase();
+
+  const subjectLine = clean(`${report.subject || ''}${report.chapter ? ' | ' + report.chapter : ''}`);
+  doc.setTextColor(colors.ink);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.text('Performance Summary', margin, y);
+  y += 18;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(12);
+  doc.setTextColor(colors.muted);
+  const subjectLines = wrap(subjectLine || 'Quiz Report', pageW - margin * 2, 12).slice(0, 3);
+  doc.text(subjectLines, margin, y);
+  y += subjectLines.length * 14 + 12;
+
+  doc.setFillColor(colors.ink);
+  doc.roundedRect(margin, y, pageW - margin * 2, 120, 16, 16, 'F');
+  doc.setTextColor('#FFFFFF');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('Student', margin + 24, y + 34);
+  doc.setFontSize(24);
+  doc.text(wrap(report.name || 'Unknown', 300, 24, 'bold').slice(0, 1), margin + 24, y + 65);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor('#C9CEDA');
+  doc.text(wrap(`Attempt #${report.attempt || 1} | ${clean(report.timestamp || 'Generated today')}`, 300, 11).slice(0, 1), margin + 24, y + 91);
+  doc.setTextColor('#FFFFFF');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(38);
+  doc.text(`${report.score}/${report.total}`, pageW - margin - 150, y + 56);
+  doc.setFontSize(14);
+  doc.setTextColor('#C9CEDA');
+  doc.text(`${report.percentage}% score`, pageW - margin - 150, y + 82);
+  y += 144;
+
+  const gap = 12;
+  const cardW = (pageW - margin * 2 - gap * 2) / 3;
+  drawInfoCard('Questions Attempted', `${report.questionsAttempted || 0}/${report.total || 0}`, margin, y, cardW);
+  drawInfoCard('Time Taken', secondsToText(report.timeTaken), margin + cardW + gap, y, cardW);
+  drawInfoCard('Tab Switches', report.tabSwitches || 0, margin + (cardW + gap) * 2, y, cardW);
+  y += 94;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(colors.ink);
+  doc.text('Question-wise Review', margin, y);
+  y += 24;
+
+  const answers = report.answers || [];
+  if (!answers.length) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(13);
+    doc.setTextColor(colors.muted);
+    doc.text(wrap('This older attempt has summary data only. New attempts will include every answered question.', pageW - margin * 2, 13), margin, y);
+  }
+
+  answers.forEach((a, idx) => {
+    const boxW = pageW - margin * 2;
+    const contentX = margin + 22;
+    const textW = boxW - 44;
+    const qLines = wrap(a.question || '', textW - 104, 13, 'bold');
+    const yourLines = wrap(`Student answer: ${a.yourAnswer || '-'}`, textW, 11.5);
+    const correctLines = wrap(`Correct answer: ${a.correct || '-'}`, textW, 11.5);
+    const expLines = a.explanation ? wrap(`Explanation: ${a.explanation}`, textW, 11.2) : [];
+    const isCorrect = !!a.isCorrect;
+    const boxH = 82 + (qLines.length * 16) + (yourLines.length * 15) + (correctLines.length * 15) + (expLines.length * 14);
+    need(boxH + 16);
+    doc.setFillColor('#FFFFFF');
+    doc.roundedRect(margin, y, boxW, boxH, 12, 12, 'F');
+    doc.setFillColor(isCorrect ? colors.green : colors.red);
+    doc.roundedRect(margin, y, 6, boxH, 3, 3, 'F');
+    doc.setDrawColor(isCorrect ? '#25D366' : '#FF3D8A');
+    doc.setLineWidth(0.8);
+    doc.roundedRect(margin, y, boxW, boxH, 12, 12, 'S');
+    drawBadge(isCorrect ? 'CORRECT' : 'REVISE', pageW - margin - 104, y + 18, isCorrect ? colors.paleGreen : colors.paleRed, isCorrect ? colors.green : colors.red);
+    doc.setTextColor(colors.blue);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text(`Question ${a.questionNo || idx + 1}`, contentX, y + 34);
+    doc.setTextColor(colors.ink);
+    doc.setFontSize(13);
+    doc.text(qLines, contentX, y + 58);
+    let rowY = y + 66 + qLines.length * 16;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11.5);
+    doc.setTextColor(colors.muted);
+    doc.text(yourLines, contentX, rowY);
+    rowY += yourLines.length * 15;
+    doc.setTextColor(colors.green);
+    doc.text(correctLines, contentX, rowY);
+    rowY += correctLines.length * 15;
+    if (expLines.length) {
+      doc.setTextColor(colors.muted);
+      doc.text(expLines, contentX, rowY);
+    }
+    y += boxH + 16;
+  });
+
+  drawWatermarkAndFooters();
+  doc.save(fileName || 'TTC_Quiz_Report.pdf');
+}
+
+async function loadPdfAssets(){
+  const entries = await Promise.all([
+    imageToDataUrl(TTC_ASSETS.logo),
+    imageToDataUrl(TTC_ASSETS.qr),
+    imageToDataUrl(TTC_ASSETS.watermark)
+  ]);
+  return { logo: entries[0], qr: entries[1], watermark: entries[2] };
+}
+
+async function imageToDataUrl(url){
+  try {
+    const res = await fetch(url, { mode: 'cors', cache: 'force-cache' });
+    if (!res.ok) throw new Error('Image failed');
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch(e) {
+    return '';
+  }
+}
+
+function safePdfName(value){
+  return String(value || 'Quiz').replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_').slice(0, 60);
+}
+
+async function createTtcQuizPdf(report, fileName){
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('PDF maker is still loading. Please check your internet connection and try again.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const colors = {
+    page: '#EAF6F6', header: '#4A90E2',
+    teal: '#207C78', tealDark: '#2F6FAF', tealSoft: '#DDF3EF',
+    cream: '#FFF8EF', mustard: '#F7B84B', white: '#FFFFFF',
+    ink: '#243447', body: '#64748B', line: '#E8DED2',
+    green: '#2E8B57', red: '#D95B72'
+  };
+  const assets = await loadPdfAssets();
+  const panelX = 30, panelW = pageW - 60, firstPanelY = 118, otherPanelY = 38;
+  const contentX = 58, bottomLimit = pageH - 82;
+  let y = 0;
+
+  function clean(value){ return String(value ?? '').replace(/[^\x09\x0A\x0D\x20-\x7E\u00A0-\u024F]/g, '').replace(/\s+/g, ' ').trim(); }
+  function wrap(text, width, size, weight='normal'){ doc.setFont('helvetica', weight); doc.setFontSize(size); return doc.splitTextToSize(clean(text), width); }
+  function withOpacity(opacity, draw){ let used=false; try{ doc.setGState(new doc.GState({ opacity })); used=true; }catch(e){} draw(); if(used){ try{ doc.setGState(new doc.GState({ opacity: 1 })); }catch(e){} } }
+  function drawImage(asset, x, imgY, w, h){ if(!asset || !asset.data) return; try{ doc.addImage(asset.data, asset.type || 'PNG', x, imgY, w, h); }catch(e){} }
+  function drawImageContain(asset, cx, cy, maxW, maxH){ if(!asset || !asset.data) return; const scale=Math.min(maxW/(asset.width||maxW), maxH/(asset.height||maxH)); const w=(asset.width||maxW)*scale, h=(asset.height||maxH)*scale; drawImage(asset, cx-w/2, cy-h/2, w, h); }
+  function secondsToText(sec){ sec=parseInt(sec||0); return sec>=60 ? `${Math.floor(sec/60)}m ${sec%60}s` : `${sec}s`; }
+
+  function pageBase(firstPage=false){
+    const panelY = firstPage ? firstPanelY : otherPanelY;
+    const panelH = pageH - panelY - 50;
+    doc.setFillColor(colors.page); doc.rect(0, 0, pageW, pageH, 'F');
+    if (firstPage) { doc.setFillColor(colors.header); doc.rect(0, 0, pageW, 98, 'F'); }
+    doc.setFillColor(colors.cream); doc.roundedRect(panelX, panelY, panelW, panelH, 24, 24, 'F');
+    if (firstPage) {
+      drawImage(assets.logo, 48, 24, 52, 52);
+      doc.setTextColor(colors.white); doc.setFont('helvetica', 'bold'); doc.setFontSize(30); doc.text('TTC Quiz Results', 116, 48);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(13); doc.text('Tushar Tuition Classes, Wardha', 118, 70);
+      drawImage(assets.qr, pageW - 98, 25, 52, 52);
+    }
+  }
+  function drawFootersAndWatermark(){
+    const pages = doc.internal.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i);
+      withOpacity(0.07, () => drawImageContain(assets.watermark, pageW/2, pageH/2 + 35, 350, 210));
+      doc.setTextColor('#6E8398'); doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      doc.text(`Page ${i} of ${pages}`, pageW - 92, pageH - 24);
+      doc.text('Generated by TTC Quiz System', 48, pageH - 24);
+    }
+  }
+  function newPage(){ doc.addPage(); pageBase(false); y = 76; }
+  function need(height){ if(y + height > bottomLimit) newPage(); }
+  function statCard(label, value, x, statY, w){
+    doc.setFillColor(colors.white); doc.roundedRect(x, statY, w, 70, 16, 16, 'F');
+    doc.setTextColor(colors.teal); doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.text(clean(label).toUpperCase(), x+18, statY+24);
+    doc.setTextColor(colors.ink); doc.setFontSize(19); doc.text(wrap(value, w-36, 19, 'bold').slice(0,1), x+18, statY+52);
+  }
+
+  pageBase(true); y = 150;
+  const subjectLine = clean(`${report.subject || ''}${report.chapter ? ' | ' + report.chapter : ''}`);
+  doc.setTextColor(colors.ink); doc.setFont('helvetica', 'bold'); doc.setFontSize(24); doc.text('Performance Summary', contentX, y);
+  y += 22;
+  doc.setTextColor(colors.body); doc.setFont('helvetica', 'normal'); doc.setFontSize(14);
+  const subjectLines = wrap(subjectLine || 'Quiz Report', panelW - 56, 14).slice(0,3);
+  doc.text(subjectLines, contentX, y); y += subjectLines.length * 17 + 18;
+
+  doc.setFillColor(colors.white); doc.roundedRect(contentX, y, panelW - 56, 126, 22, 22, 'F');
+  doc.setFillColor(colors.mustard); doc.roundedRect(contentX, y+18, 148, 90, 18, 18, 'F');
+  doc.setTextColor(colors.teal); doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.text('Score', contentX+24, y+47);
+  doc.setFontSize(34); doc.text(`${report.score}/${report.total}`, contentX+24, y+86);
+  doc.setTextColor(colors.ink); doc.setFontSize(16); doc.text('Student', contentX+178, y+40);
+  doc.setFontSize(24); doc.text(wrap(report.name || 'Unknown', 260, 24, 'bold').slice(0,1), contentX+178, y+72);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(13); doc.setTextColor(colors.body);
+  doc.text(wrap(`Attempt #${report.attempt || 1} | ${clean(report.timestamp || 'Generated today')}`, 280, 13).slice(0,2), contentX+178, y+98);
+  y += 154;
+
+  const gap = 14, statW = (panelW - 56 - gap * 2) / 3;
+  statCard('Percentage', `${report.percentage}%`, contentX, y, statW);
+  statCard('Attempted', `${report.questionsAttempted || 0}/${report.total || 0}`, contentX + statW + gap, y, statW);
+  statCard('Time', secondsToText(report.timeTaken), contentX + (statW + gap) * 2, y, statW);
+  y += 100;
+
+  doc.setTextColor(colors.ink); doc.setFont('helvetica', 'bold'); doc.setFontSize(23); doc.text('Question Review', contentX, y); y += 32;
+  const answers = report.answers || [];
+  if(!answers.length){ doc.setTextColor(colors.body); doc.setFont('helvetica', 'normal'); doc.setFontSize(15); doc.text(wrap('This older attempt has summary data only. New attempts will include every answered question.', panelW - 76, 15), contentX, y); }
+
+  answers.forEach((a, idx) => {
+    const cardX = contentX + 64, tabX = contentX + 6, cardW = panelW - 126, textX = cardX + 36, textW = cardW - 72;
+    const qLines = wrap(a.question || '', textW - 92, 16, 'bold');
+    const yourLines = wrap(`Student answer: ${a.yourAnswer || '-'}`, textW, 14);
+    const correctLines = wrap(`Correct answer: ${a.correct || '-'}`, textW, 14);
+    const expLines = a.explanation ? wrap(`Explanation: ${a.explanation}`, textW, 13.5) : [];
+    const isCorrect = !!a.isCorrect;
+    const cardH = Math.max(154, 82 + qLines.length*20 + yourLines.length*18 + correctLines.length*18 + expLines.length*17);
+    need(cardH + 26);
+    doc.setFillColor(colors.mustard); doc.roundedRect(tabX, y+20, 164, cardH-34, 18, 18, 'F');
+    doc.setTextColor(colors.teal); doc.setFont('helvetica', 'bold'); doc.setFontSize(32); doc.text(`${a.questionNo || idx + 1}.`, tabX+18, y + cardH/2 + 12);
+    doc.setFillColor(colors.white); doc.roundedRect(cardX, y, cardW, cardH, 20, 20, 'F');
+    doc.setDrawColor(colors.line); doc.setLineWidth(0.8); doc.roundedRect(cardX, y, cardW, cardH, 20, 20, 'S');
+    doc.setFillColor(isCorrect ? colors.green : colors.red); doc.roundedRect(cardX + cardW - 104, y + 26, 82, 30, 15, 15, 'F');
+    doc.setTextColor(colors.white); doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.text(isCorrect ? 'Correct' : 'Revise', cardX + cardW - 90, y + 45);
+    doc.setTextColor(colors.teal); doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text(qLines, textX, y + 38);
+    let rowY = y + 50 + qLines.length * 20;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(14); doc.setTextColor(colors.body); doc.text(yourLines, textX, rowY);
+    rowY += yourLines.length * 18;
+    doc.setTextColor(colors.green); doc.text(correctLines, textX, rowY);
+    rowY += correctLines.length * 18;
+    if(expLines.length){ doc.setTextColor(colors.body); doc.setFontSize(13.5); doc.text(expLines, textX, rowY); }
+    y += cardH + 26;
+  });
+
+  drawFootersAndWatermark();
+  doc.save(fileName || 'TTC_Quiz_Report.pdf');
+}
+
+async function loadPdfAssets(){
+  const entries = await Promise.all([imageToAsset(TTC_ASSETS.logo), imageToAsset(TTC_ASSETS.qr), imageToAsset(TTC_ASSETS.watermark)]);
+  return { logo: entries[0], qr: entries[1], watermark: entries[2] };
+}
+
+async function imageToAsset(url){
+  try {
+    const res = await fetch(url, { mode: 'cors', cache: 'force-cache' });
+    if(!res.ok) throw new Error('Image failed');
+    const blob = await res.blob();
+    const data = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    const size = await new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth || 1, height: img.naturalHeight || 1 });
+      img.onerror = () => resolve({ width: 1, height: 1 });
+      img.src = data;
+    });
+    return { data, width: size.width, height: size.height, type: blob.type && blob.type.includes('jpeg') ? 'JPEG' : 'PNG' };
+  } catch(e) {
+    return null;
+  }
+}
+ 
+/* ══════════════════════════════════════
+   DEMO DATA
+══════════════════════════════════════ */
+function useDemoData() {
+  scriptUrl = 'DEMO';
+  showDashboard();
+  allData = [
+    { 'Timestamp':'08/04/2026, 09:14 AM','Student Name':'Aarav Sharma','Subject':'English','Chapter':'A Work of Artifice','Score':28,'Total Questions':30,'Percentage (%)':93,'Time Taken (sec)':840,'Tab Switches':0,'Attempt No.':1,'Wrong Answers (JSON)':JSON.stringify([{question:'What does Artifice mean?',yourAnswer:'A painting',correct:'Clever trickery'}]),'Device':'Mozilla/5.0' },
+    { 'Timestamp':'08/04/2026, 09:22 AM','Student Name':'Priya Desai','Subject':'English','Chapter':'A Work of Artifice','Score':18,'Total Questions':30,'Percentage (%)':60,'Time Taken (sec)':1240,'Tab Switches':4,'Attempt No.':1,'Wrong Answers (JSON)':JSON.stringify([{question:'What is a Metaphor?',yourAnswer:'Simile',correct:'Metaphor'},{question:'What does Sinister mean?',yourAnswer:'Peaceful',correct:'Seeming evil, dangerous, or causing harm'}]),'Device':'Mozilla/5.0' },
+    { 'Timestamp':'08/04/2026, 10:05 AM','Student Name':'Rohan Patil','Subject':'English','Chapter':'A Work of Artifice','Score':12,'Total Questions':30,'Percentage (%)':40,'Time Taken (sec)':520,'Tab Switches':1,'Attempt No.':1,'Wrong Answers (JSON)':JSON.stringify([{question:'What does Patriarchal mean?',yourAnswer:'Women in charge',correct:'Controlled by men'},{question:'What is Subjugation?',yourAnswer:'Equal rights',correct:'Cruelly controlling someone'}]),'Device':'Mozilla/5.0' },
+    { 'Timestamp':'08/04/2026, 10:45 AM','Student Name':'Priya Desai','Subject':'English','Chapter':'A Work of Artifice','Score':24,'Total Questions':30,'Percentage (%)':80,'Time Taken (sec)':990,'Tab Switches':0,'Attempt No.':2,'Wrong Answers (JSON)':JSON.stringify([{question:'What does Sinister mean?',yourAnswer:'Small',correct:'Seeming evil'}]),'Device':'Mozilla/5.0' },
+    { 'Timestamp':'08/04/2026, 11:30 AM','Student Name':'Sneha Kulkarni','Subject':'Hindi','Chapter':'Idioms Set 1','Score':22,'Total Questions':25,'Percentage (%)':88,'Time Taken (sec)':720,'Tab Switches':0,'Attempt No.':1,'Wrong Answers (JSON)':JSON.stringify([]),'Device':'Mozilla/5.0' },
+    { 'Timestamp':'08/04/2026, 12:10 PM','Student Name':'Vijay Thakur','Subject':'Maths','Chapter':'Definitions','Score':15,'Total Questions':20,'Percentage (%)':75,'Time Taken (sec)':660,'Tab Switches':3,'Attempt No.':1,'Wrong Answers (JSON)':JSON.stringify([{question:'What is a prime number?',yourAnswer:'Even number',correct:'A number divisible only by 1 and itself'}]),'Device':'Mozilla/5.0' },
+  ].reverse();
+  buildFilters();
+  applyFilters();
+  updateStats();
+  document.getElementById('lastRefreshed').textContent = '👀 Demo Mode';
+}
+ 
+/* ══════════════════════════════════════
+   UTILS
+══════════════════════════════════════ */
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
