@@ -834,6 +834,7 @@ function showDetail(idx) {
   const tabs    = parseInt(r['Tab Switches'] || 0);
   const attempt = parseInt(r['Attempt No.'] || 1);
   const ts      = r['Timestamp'] || '';
+  const fbLabel = r['Feedback Label'] || 'No feedback';
  
   const timeStr = timeSec > 60 
     ? `${Math.floor(timeSec/60)}m ${timeSec%60}s`
@@ -842,13 +843,14 @@ function showDetail(idx) {
   document.getElementById('modalName').textContent = name;
   document.getElementById('modalSub').textContent  = `${subject} · ${chapter}`;
  
-  document.getElementById('modalStats').innerHTML = `
+ document.getElementById('modalStats').innerHTML = `
     <div class="modal-stat">Score: <span>${score}/${total}</span></div>
     <div class="modal-stat">Percentage: <span>${pct}%</span></div>
     <div class="modal-stat">Time Taken: <span>${timeStr}</span></div>
     <div class="modal-stat ${tabs>2?'cheat':''}">Tab Switches: <span>${tabs}</span>${tabs>2?' 🚨':''}</div>
     <div class="modal-stat">Attempt No.: <span>#${attempt}</span></div>
     <div class="modal-stat">Date: <span>${ts}</span></div>
+    <div class="modal-stat">Vibe Check: <span>${fbLabel}</span></div>
   `;
  
   let wrongAnswers = [];
