@@ -1,0 +1,21 @@
+{
+  "name": "TTC Quiz Results",
+  "short_name": "TTC Analytics",
+  "description": "Analytics and PDF generation for TTC student quiz attempts.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#F7F7F8",
+  "theme_color": "#1CB0F6",
+  "icons": [
+    {
+      "src": "icon-quizres.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-quizres.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
